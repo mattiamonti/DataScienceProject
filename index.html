@@ -3,11 +3,75 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project DS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"> 
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>Used Car Project</title>
+    <style>
+        .body{display: flex; justify-content: center; align-items: center; }
+        h1{font-size: 60px; font-family: 'Roboto', sans-serif; font-weight:  600; text-align: center;}
+
+        .title{width: 50%; height: 60%; float: left;margin-top: 10%;margin-left: 2%; margin-right: 0.5%;}
+
+        .card{background-color: rgb(223, 223, 248); height: 40%; width: 20%; float: left; margin-left: 2.5%; margin-top: 15%;border-radius: 20px;}
+        .card:hover{height: 42%; width: 22%; margin-left: 2%; margin-top: 14.5%;transition: linear 200ms;}
+
+        .foto1{background-image: url("img/porsche.png"); width: 100%; height: 40%; background-repeat: no-repeat;background-size: contain;  margin-top: 0%; background-position: center;}
+        .foto2{background-image: url("img/testarossa.png"); width: 100%; height: 40%; background-repeat: no-repeat;background-size: contain; margin-top: 0%;background-position: center;}
+        
+
+
+        .tit1, .tit2{display: flex; align-items: center; justify-content: center;margin-top: 10%;}
+        h2{font-family: 'Roboto', sans-serif; font-size: 2vw;}
+        p{font-family: 'Roboto', sans-serif; font-size: 25px;text-align: justify; margin-left: 30px; margin-right: 30px;}
+
+        .button{display: block; width: 50%; height: 10%; background-color: rgb(248, 214, 102); margin-left: 25%; margin-top: 5%; text-decoration: none;
+                border-radius: 20px;}
+        .arr{margin-left: 43%; margin-top: 3%;}
+
+        .github{margin-left: 3vw;height: 5vh; width: 5vw;}
+        .kaggle{height: 5vh; width: 5vw;}
+
+
+        a.emp{text-decoration: none;}
+        
+        p.firma{font-family: 'Roboto', sans-serif; font-weight: 300; font-size: 15px;text-align: right;font-style: italic;}
+
+    </style>
 </head>
 <body>
-    <h1>Progetto Fondamenti Scienza Dati</h1>
-    <a href="slide.html">Slide</a>
-    <a href="Presentation.html">Progetto</a>
+    <div class="title">
+        <h1>Progetto Auto Usate</h1>
+        <p>Il progetto verte sull'analisi di un dataset contenente circa 100.000 automobili usate. 
+            Le auto provengono da annunci online nel Regno Unito</p>
+        <br>
+        <br>
+        <a href="https://github.com/mattiamonti/DataScienceProject" class="emp">
+            <svg class="github" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </a>
+
+        <a href="https://www.kaggle.com/adityadesai13/used-car-dataset-ford-and-mercedes" class="emp">
+            <svg class="kaggle" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12.008 0c-4.225 0-10.008 1.001-10.008 4.361v15.277c0 3.362 6.209 4.362 10.008 4.362 3.783 0 9.992-1.001 9.992-4.361v-15.278c0-3.361-5.965-4.361-9.992-4.361zm0 2c3.638 0 7.992.909 7.992 2.361 0 1.581-5.104 2.361-7.992 2.361-3.412.001-8.008-.905-8.008-2.361 0-1.584 4.812-2.361 8.008-2.361zm7.992 17.386c0 1.751-5.104 2.614-7.992 2.614-3.412 0-8.008-1.002-8.008-2.614v-2.04c2.117 1.342 5.17 1.78 8.008 1.78 2.829 0 5.876-.438 7.992-1.78v2.04zm0-4.873c0 1.75-5.104 2.614-7.992 2.614-3.412-.001-8.008-1.002-8.008-2.614v-2.364c2.116 1.341 5.17 1.78 8.008 1.78 2.839 0 5.881-.442 7.992-1.78v2.364zm-7.992-2.585c-3.426 0-8.008-1.006-8.008-2.614v-2.371c2.117 1.342 5.17 1.78 8.008 1.78 2.829 0 5.876-.438 7.992-1.78v2.372c0 1.753-5.131 2.613-7.992 2.613z"/></svg>
+        </a>
+
+        <br>
+        <p class="firma">Monti Cavaler Mattia</p>
+
+    </div>
+
+    <!--<a href="ProvaHTML/slide.html">Slide</a>
+    <a href="Presentation.html">Progetto</a>-->
+    <div class="card1 card">
+        <div class="tit1"><h2>Progetto Completo</h2></div>
+        <div class="foto1"></div>
+        <a href="Presentation.html" class="button"><svg class="arr" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M13.025 1l-2.847 2.828 6.176 6.176h-16.354v3.992h16.354l-6.176 6.176 2.847 2.828 10.975-11z"/></svg></a>
+    </div>
+
+    <div class="card2 card">
+        <div class="tit2"><h2>Presentazione</h2></div>
+        <div class="foto2"></div>
+        <a href="ProvaHTML/slide.html" class="button"><svg class="arr" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M13.025 1l-2.847 2.828 6.176 6.176h-16.354v3.992h16.354l-6.176 6.176 2.847 2.828 10.975-11z"/></svg></a>
+    </div>
+    
 </body>
 </html>
