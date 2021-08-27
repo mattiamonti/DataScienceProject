@@ -1,0 +1,845 @@
+---
+output: 
+  html_document:
+    css: "PresentationStyle.css"
+
+---
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(gganimate)
+library(hrbrthemes)
+
+Autos = read.csv("Autos.csv")
+
+```
+<br>
+
+# Progetto Fondamenti di Scienza dei Dati
+##### Monti Cavaler Mattia
+<br>
+<br>
+Il progetto verte sull'analisi di un dataset che comprende circa 100.000 automobili, i dati provengono da annunci online di auto usate nel Regno Unito. Il creatore del dataset ha provveduto a raccogliere i dati e a pulirli, in modo da fornire un file .csv per ognuna delle case automobilistiche trovate; ho poi provveduto ad unire opportunatamente i dati in un'unico file .csv per una maggior comodità nell'utilizzo. Inoltre ho convertito alcune colonne in modo da essere comprensibili da un pubblico italiano, come ad esempio convertire il prezzo da Sterline ad Euro (cambio utilizzato: 1 Sterlina = 1.16 Euro) oppure le miglia percorse in kilometraggio.
+
+<br>
+
+## Conosciamo i dati
+[Kaggle dataset](https://www.kaggle.com/adityadesai13/used-car-dataset-ford-and-mercedes)
+
+Il dataset contiene auto usate di diversi brand quali: Audi, BMW, Mercedes, Toyota, Volkswagen, Vauxhall (Opel), Ford, Hyundai e Skoda. Negli studi realtivi ai consumi terremo poco conto delle auto ibride, infatti i kilometri per litro riportati nel dataset non rispecchiano la realtà poichè vengono calcolati sommando i kilometri che l'auto può percorrere in elettrico ai kilometri che l'auto può percorrere con un litro di carburante. Verranno prese in considerazione per la maggior parte del progetto le auto dal 2010 in poi, in quanto non troppo vecchie per essere prese in considerazione in analisi che possono essere applicate alla realtà.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(year, brand) %>%
+  summarise(n = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = brand, y = n, fill=brand), stat = "identity", alpha=0.8, show.legend = FALSE) +
+  ggtitle("Numero di auto per casa madre") +
+  xlab("") +
+  ylab("") +
+  theme_ipsum() +
+  theme(panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0))
+  #scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  #theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(size = 0), panel.grid.minor = element_line(size=0))
+
+
+
+
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(year, brand) %>%
+  summarise(n = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = year, y = n, fill=brand), stat = "identity", alpha=0.8) +
+  ggtitle("Distribuzione auto per casa madre") +
+  xlab("") +
+  ylab("") +
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0))
+  #theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(size = 0), panel.grid.minor = element_line(size=0)) +
+  
+
+```
+
+## Domande guida
+* Comprando un'auto automatica avrò minori consumi?
+* Spendendo di più avrò un guadagno in termini di efficienza?
+* Quanto si svalutano le auto?
+* Il carburante o la trasmissione influenzano la svalutazione?
+* Stesso segmento equivale alla stessa svalutazione?
+* Auto da giovani?
+* Auto ibride: fenomeno recente?
+ 
+<br>
+
+
+## Studiamo il prezzo delle auto
+e prendiamo come caso di studio l'Audi A3, il modello più popolare della casa tedesca.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(model == " A3") %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(engineSize != 0.0) %>%
+  #filter(fuelType == "Diesel") %>%
+  ggplot() + 
+  geom_point(aes(x = kilometraggio, y = price, color = fuelType), alpha = 0.15, size = 3, show.legend = FALSE)+
+  geom_smooth(aes(x = kilometraggio, y = price)) +
+  facet_wrap(~fuelType)+
+  ggtitle("Prezzo, kilometraggio, carburante Audi A3") +
+  scale_x_continuous(labels = c("0","50k","100k","150k","200k","250k")) +
+  ylab("Prezzo") +
+  xlab("Kilometraggio") +
+  theme_ipsum() +
+  theme(panel.grid.minor = element_line(0))
+
+
+```
+
+Notiamo immediatamente due aree molto marcate per entrambi i tipi di carburante, diesel e benzina, ma con una differenza: le aree inerenti alle auto con motorizzazioni diesel si trovano in un range di prezzo minore rispetto alla controparte benzina.
+Vediamo come una buona parte delle auto diesel superi la soglia dei 100.000 km , mentre solamente poche auto a benzina la sorpassano.
+Comune ad entrambe le motorizzazioni è indubbiamente il calo di prezzo all'aumentare del kilometraggio, come ci si poteva aspettare. Il calo è molto marcato fino ai 35.000 / 40.000 km per entrambe le categorie, però dopo questa soglia le auto a benzina rivelano una discesa più accentuata rispetto alle auto diesel. Si potrebbe affermare che, nel caso dell'Audi A3, la perdità di valore collegata all'aumento del kilometraggio affligge maggiormente le auto con motori benzina.
+
+Il grafico relativo alla trasmissione rivela che le auto manuali vengono vendute generalmente con più kilometri e sono più economiche di quelle automatiche o semi automatiche. Normalmente nella maggior parte delle automobili la trasmissione automatica viene offerta come optional, ciò spiega il prezzo superiore di quest'utilme rispetto a quelle manuali.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(model == " A3") %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(engineSize != 0.0) %>%
+  ggplot() + 
+  geom_point(aes(x = kilometraggio, y = price, color = transmission), alpha = 0.2, size = 3, show.legend = FALSE)+
+  geom_smooth(aes(x = kilometraggio, y = price)) +
+  facet_wrap(~transmission)+
+  scale_x_continuous(breaks = scales::breaks_extended(n=5), labels=c("0","50k","100k","150k","200k","250k")) +
+  ggtitle("Prezzo, kilometraggio, trasmissione Audi A3") +
+  ylab("") +
+  xlab("Kilometraggio") +
+  theme_ipsum() +
+  theme(panel.grid.minor = element_line(0))
+
+#prezzo boxplot rispetto trasmissione
+Autos %>%
+  filter(model == " A3") %>%
+  filter(engineSize != 0.0) %>%
+  ggplot() + 
+  geom_boxplot(aes(x = transmission, y = price, color = transmission), alpha = 0.5, size = 1, show.legend = FALSE)+
+  xlab("")+
+  ylab("Prezzo")+
+  ggtitle("Prezzo rispetto a trasmissione Audi A3") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0))
+```
+
+
+Pensando al funzionamento della trasmissione automatica viene spontanea la domanda seguente
+
+<br>
+
+## Comprando un auto automatica avrò un guadagno in termini di consumi?
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(model == " A3") %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(engineSize != 0.0) %>%
+  group_by(brand, transmission, fuelType) %>%
+  summarise(meanPrice = round(mean(price)), meanKMPL = mean(kmpl))  %>%
+  ggplot() +
+  geom_point(aes(x = meanKMPL, y = meanPrice, color = transmission, shape = fuelType), size = 5, alpha = 0.8) +
+  xlab("Kilometri per litro di carburante") +
+  ylab("Prezzo") +
+  ggtitle("Focus consumi rispetto alla trasmissione Audi A3") +
+  theme_ipsum() +
+  theme(legend.title = element_blank())
+  
+
+Autos %>%
+  filter(engineSize != 0) %>%
+  filter(year >= 2010) %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(transmission != "Other") %>%
+  group_by(brand, transmission) %>%
+  summarise(meanPrice = round(mean(price)), meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = meanKMPL, y = brand, size = meanPrice, color = transmission), alpha = 0.8) +
+  facet_wrap(~transmission) +
+  ggtitle("Consumi rispetto alla trasmissione") +
+  ylab("") +
+  xlab("Kilometri per litro di carburante") +
+  theme_ipsum() +
+  theme(panel.grid.minor = element_line(0), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Petrol" | fuelType == "Diesel") %>%
+  filter(transmission != "Other") %>%
+  group_by(transmission, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_bar(aes(x = transmission, y = meanKMPL, fill = fuelType),alpha = 0.8, stat = "identity", position = "dodge") +
+  ggtitle("Influenza trasmissione su consumi") +
+  xlab("Tipo di trasmissione") +
+  ylab("Kilometri per litro di carburante") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0), legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+```
+
+La Risposta è negativa, infatti osserviamo sia nel focus sull'Audi A3 sia in generale come le auto con trasmissione manuale, a prescindere dal tipo di carburante, percorrano più kilometri per litro con la caratteristica di essere anche più economiche di quelle con cambio automatico o semi-automatico.
+Nel grafico che comprende tutte le auto la spiegazione di questo fenomeno ricade nella cilindrata del motore, infatti le auto con trasmissioni automatiche e semi-automatiche presentano motori più grandi; ciò ne spiega i maggiori consumi.
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Petrol" | fuelType == "Diesel") %>%
+  filter(transmission != "Other") %>%
+  group_by(transmission, fuelType) %>%
+  summarise(meanKMPL = mean(engineSize)) %>%
+  ggplot() +
+  geom_bar(aes(x = transmission, y = meanKMPL, fill = fuelType),alpha = 0.8, stat = "identity", position = "dodge") +
+  ggtitle("Cilindrata motore per trasmissione") +
+  xlab("Tipo di trasmissione") +
+  ylab("cilindrata motore (cc)") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0), legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+        panel.grid.minor.y = element_blank())
+```
+
+
+<br>
+
+Un'altra domanda che ci si può porre è se
+
+## Spendendo di più avrò un guadagno in termini di efficienza?
+
+Il grafico sottostante rivela che la risposta potrebbe essere , in parte, affermativa. Seguendo la linea di tendenza notiamo come i kilometri che le auto percorrono con un litro di carburante salgano fino al valore di prezzo di 10.000 / 12.000 euro, per poi iniziare una discesa prevedibile dato che le auto nelle fasce di prezzo più esclusive presentano generalmente motori più grandi e performanti, sia per le auto sportive sia per quelle di lusso. Parzialmente possiamo quindi rispondere alla domanda ipotizzando: se l'auto da comprare rientra nel range di prezzo che va fino ai 10.000 euro allora può convenire, in termini di consumi e quindi di spese future, investire un pò di più nell'acquisto per poter ottenere un'auto con un motore più efficiente, quindi migliorare i kilometri percorsi con un litro di carburante che implica un risparmio a lungo termine sui relativi costi.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  #filter(brand == "Audi") %>%
+  #filter(model == " A3") %>%
+  filter(engineSize != 0.0) %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(fuelType != "Electric") %>%
+  filter(kmpl < 40) %>%
+  ggplot()+
+  geom_point(aes(x = price, y = kmpl, color = brand), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = price, y = kmpl)) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=10)) +
+  ggtitle("Prezzo in relazione all'efficienza") +
+  xlab("Prezzo") +
+  ylab("Kilometri per litro di carburante") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+
+Prendendo in analisi una singola automobile, per continuità l'Audi A3, notiamo che anche per essa vale la relazione descritta precedentemente. In questo specifico esempio un'auto diesel dal valore di 5000 euro percorre circa 18/20 kilometri con un litro, mentre investendo 2000 euro in più sull'acquisto avremmo un miglioramento dei consumi che porta l'auto a percorrere 23/24 kilometri con un litro. Considerando di percorrere 20.000 km all'anno, con la prima auto spenderemmo circa 1052 litri mentre con la seconda 869, considerando 1.50 euro a litro di diesel, abbiamo una risparmio di 275 euro all'anno; tenendo conto che in italia l'età media delle auto è di 9/10 anni  e ipotizzando un utilizzo costante di 20.000 km all'anno per 9 anni, con la seconda auto saremmo rientrati e avremmo superato l'investimento iniziale di 2000 euro in più per l'acquisto risparmiando 475 euro in questo caso. Ovviamente non si può creare una regola generale in quanto ci sono molte variabili in gioco, prima fra tutte i kilometri percorsi all'anno.
+
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(model == " A3") %>%
+  filter(engineSize != 0.0) %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(kmpl < 40) %>%
+  ggplot()+
+  geom_point(aes(x = price, y = kmpl, color = fuelType), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = price, y = kmpl)) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=10)) +
+  ggtitle("Prezzo in relazione all'efficienza Audi A3") +
+  xlab("Prezzo") +
+  ylab("Kilometri per litro di carburante") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+<br>
+
+## Studiamo i consumi delle auto
+Nel seguente grafico possiamo osservare l'andamento dei consumi negli anni. Infatti notiamo come negli anni sia cambiata l'efficienza delle automobili, anche se forse ci aspetteremmo una curva sempre crescente ciò non accade. Infatti la linea di tendenza mostra come fino al 2016 con l'aumentare degli anni aumenti anche l'efficienza delle automobili, mentre dopo il 2016 la curva segue una discesa. Ciò significa auto nuove meno efficienti delle precedenti?
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(year<2021) %>%
+  filter(year>1994) %>%
+  
+  #filter(brand == c("Audi", "Bmw", "Merc")) %>%
+  #filter(brand == c("Ford", "Hyundai", "Skoda")) %>%
+  #filter(brand == c("Volkswagen", "Toyota", "Vauxhall")) %>%
+  
+  group_by(brand, year) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = meanKMPL, color = brand)) +
+  geom_line(aes(x = year, y = meanKMPL, color = brand), alpha=0.6) +
+  geom_smooth(aes(x = year, y = meanKMPL)) +
+  ggtitle("Kilometri per litro di carburante negli anni") +
+  ylab("KM per litro") +
+  xlab("Anni") +
+  theme_ipsum() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.title = element_blank())
+
+```
+
+Possiamo subito pensare ad un aumento, molto controtendenza, della cilindrata del motore a discapito dell'efficienza, cerchiamo una risposta nel grafico.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year>=2000) %>%
+  filter(year<=2020) %>%
+  group_by(brand, year) %>%
+  summarise(meanEngineSize = mean(engineSize)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = meanEngineSize, color = brand)) +
+  geom_line(aes(x = year, y = meanEngineSize, color = brand), alpha=0.6) +
+  #facet_wrap(~brand)+
+  ylim(c(1,4)) +
+  xlab("Anni") +
+  ylab("Grandezza motore in 1000 cc") +
+  ggtitle("Cilindrata automobili negli anni") +
+  theme_ipsum() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.title = element_blank())
+
+``` 
+
+```{r, eval=FALSE, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year>=2000) %>%
+  filter(year<=2010) %>%
+  group_by(brand) %>%
+  summarise(meanES = mean(engineSize)) %>%
+  ggplot()+
+  geom_point(aes(x = brand, y = meanES, color = brand), show.legend = FALSE) +
+  xlab("")+
+  ylab("Cilindrata") +
+  ggtitle("Cilindrata tra il 2000 e il 2010")+
+  ylim(c(0,3))
+
+
+
+
+Autos %>%
+  filter(year>=2011) %>%
+  filter(year<=2020) %>%
+  group_by(brand) %>%
+  summarise(meanES = mean(engineSize)) %>%
+  ggplot()+
+  geom_point(aes(x = brand, y = meanES, color = brand), show.legend = FALSE) +
+  xlab("")+
+  ylab("Cilindrata") +
+  ggtitle("Cilindrata tra il 2010 e il 2020") +
+  ylim(c(0,3))
+
+#grafico animato cilindrata media durante gli anni
+library(gifski)
+p =
+Autos %>%
+  filter(year>=2000) %>%
+  filter(year<=2020) %>%
+  group_by(brand, year) %>%
+  summarise(meanES = mean(engineSize)) %>%
+  ggplot() +
+  geom_point(aes(x = brand, y = meanES, color = brand), size = 4, alpha = 0.6, show.legend = FALSE) +
+  labs(title = "Cilindrata anno: {frame_time}", x = "", y = "Cilindrata motore") +
+  transition_time(year) +
+  ease_aes('linear')
+
+animate(p, duration = 20, fps = 20, width = 500, height = 500, renderer = gifski_renderer())
+anim_save("AnimazioneCilindrata500x500.gif")
+
+
+```
+
+Possiamo convincerci che la maggior parte delle case automobilistiche abbia mantenuto inalterato oppure leggermente cambiato la cilindrata media dei motori delle sue auto dal 2016 in poi, quindi la precedente teoria è stata sfatata.
+
+
+<br>
+
+## Studiamo il consumo di carburante a seconda della grandezza del motore
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+Autos %>%
+  filter(engineSize !=0) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  filter(year >=2010) %>%
+  filter(year <= 2020) %>%
+  filter(price <= 20000) %>%
+  group_by(engineSize, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = engineSize, y = meanKMPL, color = fuelType), size = 3, alpha = 0.6) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=6)) +
+  ylim(c(5,30)) +
+  ggtitle("Consumi motori auto dal valore < 20.000 euro") +
+  xlab("Cilindrata motore") +
+  ylab("Kilometri per litro di carburante") +
+  xlim(c(0,7)) +
+  theme_ipsum() +
+  theme(legend.title = element_blank())
+
+
+Autos %>%
+  filter(engineSize !=0) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  filter(year >=2010) %>%
+  filter(year <= 2020) %>%
+  filter(price >= 60000) %>%
+  group_by(engineSize, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = engineSize, y = meanKMPL, color = fuelType), size = 3, alpha = 0.6) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=6)) +
+  ylim(c(5,30)) +
+  ggtitle("Consumi motori auto dal valore > 60.000 euro") +
+  xlab("Cilindrata motore") +
+  ylab("Kilometri per litro di carburante") +
+  xlim(c(0,7)) +
+  theme_ipsum() +
+  theme(legend.title = element_blank())
+
+
+```
+
+Vediamo come nelle auto più economiche i motori diesel prevalgano nell'efficienza rispetto alla controparte benzina della stessa grandezza. Mentre per le auto più costose i motori diesel sono meno utilizzati, in quanto non adatti ad alte prestazioni e ad una coinvolgente esperienza di guida, tuttavia nelle cilindrate più piccole essi si differenziano per un efficienza maggiore. Superando i 4000 cc di cilindrata i diesel vengono abbandonati, preferendo i motori a benzina, man mano che aumenta la cilindrata diminuiscono i kilometri percorsi con un litro di carburante; inoltre aumentando la cilindrata aumentano generalmente anche le prestazioni, che è ciò che importa maggiormente in questa categoria di automobili.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#grafico in 3d per consumi cilindrata e prezzo
+library(plotly)
+AAA= 
+Autos %>%
+  filter(engineSize !=0) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  filter(year >=2000) %>%
+  filter(year <= 2020) %>%
+  group_by(engineSize, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl), meanPrice = mean(price))
+plot_ly(x = AAA$engineSize, y =AAA$meanKMPL, z = AAA$meanPrice, color = AAA$fuelType) %>%
+  layout(scene = list(xaxis = list(title = 'Cilindrata motore'),
+                     yaxis = list(title = 'Kilometri per litro'),
+                     zaxis = list(title = 'Prezzo')))
+```
+
+
+<br>
+
+## Svalutazione automobili
+
+La svalutazione che subisce un'automobile non è indifferente, infatti questa è una delle principali cause per cui si tende a non acquistare auto nuove di fabbrica. Vediamo quanto grava sulle auto prese in questione.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year > 2010) %>%
+  filter(year<=2020) %>%
+  group_by(year,brand) %>%
+  summarise(brand,meanPrice = round(mean(price))) %>%
+  #calcolo la svalutazione usando il prezzo medio del 2020 come prezzo iniziale
+  mutate(initialPrice = ifelse(brand=="Audi", 41722, 
+                               ifelse(brand=="Bmw", 41038,
+                                      ifelse(brand=="Merc", 41103,
+                                             ifelse(brand=="Ford", 24151,
+                                                    ifelse(brand=="Hyundai", 22912,
+                                                           ifelse(brand=="Skoda", 26204,
+                                                                  ifelse(brand=="Volkswagen", 27629,
+                                                                         ifelse(brand=="Toyota", 26644, 18913))))))))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = brand)) +
+  geom_line(aes(x = year, y = valResiduo, color = brand), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo percentuale di tutte le case") +
+  xlab("") +
+  ylab("Valore percentuale") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+Possiamo vedere che il grafico presenta differenze maggiori nei primi 2 anni e nell'ultimo, mentre per la porzione centrale la differenza tra il valore delle auto rimane sotto il 10% tra di esse.
+Prendendo in considerazione le auto più popolari per ogni casa madre vediamo come il grafico evidenzi maggiori differenze, soffermandoci su Vauxhall (Opel) si nota come essa perda quasi il 40 % del valore solamente dopo il primo anno, mentre Audi perda solamente il 10 %.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+sval1 =
+Autos %>%
+  #filter(brand == "Audi") %>%
+  filter(model == " A3" | model == " 3 Series" | model == " C Class" |
+         model == " Fiesta" | model == " Tucson" | model == " Fabia" |
+         model == " Golf" | model == " Yaris" | model == " Corsa"
+         ) %>%
+  
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(year, brand) %>%
+  summarise(brand, meanPrice = round(mean(price))) %>%
+  #prezzo 2020 audi A3: 30481
+  #prezzo 2020 bmw 3 Series: 39670
+  #prezzo 2020 merc c class: 42829
+  mutate(initialPrice = ifelse(brand=="Audi", 30481,
+                               ifelse(brand=="Bmw", 39670,
+                                      ifelse(brand=="Merc", 42829,
+                                             ifelse(brand=="Ford", 19358,
+                                                    ifelse(brand=="Hyundai", 28224,
+                                                           ifelse(brand=="Skoda", 15984,
+                                                                  ifelse(brand=="Volkswagen", 29019,
+                                                                         ifelse(brand=="Toyota", 17824, 18961))))))))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice))
+  
+ggplot(sval1) +
+  geom_point(aes(x = year, y = valResiduo, color = brand)) +
+  geom_line(aes(x = year, y = valResiduo, color = brand), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo auto più popolare di ogni casa") +
+  xlab("") +
+  ylab("Valore percentuale") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+```
+
+<br>
+
+## Il tipo di carburante o di trasmissione influenza la svalutazione delle auto?
+
+Dai due grafici successivi si evince che il carburante influisce in maniera esigua durante quasi tutto il periodo preso in considerazione. Concentrandosi sulla parte più a destra del grafico relativo alla trasmissione si nota come a lungo termine il cambio semi-automatico perda più valore rispetto all'automatico e al manuale che si aggirano sulle medesime quote, il dato è influenzato sicuramente dalla carenza di dati in quanto le auto semi-automatiche sono solamente 7 tra il 2011 e il 2010, un numero esiguo che non permette di trarre una conclusione ponderata. Però possiamo notare che per buona parte del grafico il cambio manuale mantiene leggermente meglio il valore, ciò può essere determinato dai costi di manutenzione e i problemi che un cambio automatico può presentare avendo anche qualche anno alle spalle.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  group_by(year, fuelType) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  mutate(initialPrice = ifelse(fuelType=="Diesel", 39933, 28803)) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = fuelType)) +
+  geom_line(aes(x = year, y = valResiduo, color = fuelType), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo secondo il tipo di carburante") +
+  xlab("") +
+  ylab("Valore percentuale") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(transmission != "Other") %>%
+  group_by(year, transmission) %>%
+  summarise(meanPrice = round(mean(price)), n=n()) %>%
+  mutate(initialPrice = ifelse(transmission=="Automatic", 38170,
+                               ifelse(transmission=="Manual", 22021, 39815))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = transmission)) +
+  geom_line(aes(x = year, y = valResiduo, color = transmission), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo secondo il tipo di trasmissione") +
+  xlab("") +
+  ylab("Valore percentuale") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+
+
+Prendiamo in considerazione 3 modelli dello stesso segmento ma di case diverse, berline e station wagon tedesche: Audi A4, BMW Serie 3, Mercedes Classe C.
+
+<br>
+
+## Auto dello stesso segmento presentano svalutazioni simili?
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(model == " A4" | model == " 3 Series" | model == " C Class") %>%
+  filter(year > 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(year, model, brand) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  #prezzo 2020 audi A4: 41305
+  #prezzo 2020 bmw 3 Series: 39670
+  #prezzo 2020 merc c class: 42829
+  mutate(initialPrice = ifelse(brand=="Audi", 41305,
+                               ifelse(brand=="Bmw", 39670, 42829))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = model)) +
+  geom_line(aes(x = year, y = valResiduo, color = model), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("valore residuo stesso segmento Audi, BMW e Mercedes") +
+  xlab("") +
+  ylab("Valore percentuale")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+Il grafico evidenzia una svalutazione molto simile tra le 3 automobili, ciò può essere determinato anche dal fatto che oltre ad appartenere alla stessa categoria le auto siano tutte e tre costruite da case tedesche.
+
+Proviamo allora ad aggiungere al confronto altre automobili dello stesso segmento ma di diversi Paesi.
+Notiamo come in questo grafico ci siano più differenze, ad esempio la Skoda Octavia mantiene meglio il valore dal terzo al nono anno; infatti al quinto anno esiste un evidente divario tra quest'utilma che ha mantenuto un pò di più del 50 % del valore iniziale e la Opel Insignia che vale leggermente meno del 35 % del suo valore iniziale.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(model == " A4" | model == " 3 Series" | model == " C Class" | 
+        model == " Passat" | model == " Mondeo" | model == " Corolla" |
+          model == " Octavia" | model == " Insignia" | model == " Elantra") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(year, model, brand) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  #prezzo 2020 audi A4: 41305
+  #prezzo 2020 bmw 3 Series: 39670
+  #prezzo 2020 merc c class: 42829
+  mutate(initialPrice = ifelse(brand=="Audi", 41305,
+                               ifelse(brand=="Bmw", 39670, 
+                                      ifelse(brand=="Merc", 42829,
+                                             ifelse(brand=="Volkswagen", 30419,
+                                                    ifelse(brand=="Skoda", 23294,
+                                                           ifelse(brand=="Ford", 25100,
+                                                                  ifelse(brand=="Toyota", 29733, 26744)))))))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = model)) +
+  geom_line(aes(x = year, y = valResiduo, color = model), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo percentuale stesso segmento") +
+  xlab("") +
+  ylab("Valore percentuale") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+```
+
+Prendiamo come esempio la BMW Serie 3, berlina e station wagon molto popolare della casa tedesca, e vediamo se la trasmissione o il carburante influenza la svalutazione nel suo caso specifico.
+Dal grafico sottostante si scopre che le motorizzazioni diesel mantengono meglio il valore, anche se di poco, rispetto alla controparte benzina; il divario maggiore lo si colloca dopo il terzo anno di svalutazione dove è dell'11%.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(model == " 3 Series") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  group_by(year, fuelType) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  mutate(initialPrice = ifelse(fuelType=="Diesel", 38866, 40988)) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = fuelType)) +
+  geom_line(aes(x = year, y = valResiduo, color = fuelType), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo secondo il tipo di carburante BMW Serie 3") +
+  xlab("") +
+  ylab("Valore percentuale")+
+  theme_ipsum()  +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+```
+
+Mentre il grafico seguente rivela un "anomalia", infatti il valore medio delle auto manuali è cresciuto dopo il primo anno di vita. Però osservando i dati essi presentano una situazione normale:
+le auto del 2020 hanno in media 440 kilometri, mentre quelle del 2019 ne hanno 6058.
+Sia quelle del 2020 che quelle del 2019 presentano una mediana di 2.000 cc di cilindrata del motore, l'efficienza del motore è la medesima e inoltre sfruttano lo stesso tipo di carburante (diesel), quindi la differenza di prezzo non è data da queste variabili; bisogna specificare che questo divario si aggira attorno ai 600 euro e avendo più dati i risultati si "normalizzerebbero".
+Possiamo inoltre notare una differenza abbastanza marcata tra la trasmissione manuale e quella automatica, del 22% dopo il primo anno, del 17% dopo il secondo anno, per poi rimanere sotto il 10% fino a quando al decimo anno di svalutazione il valore residuo dei due tipi di trasmissione è il medesimo.
+
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+Autos %>%
+  filter(model == " 3 Series") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(transmission != "Other") %>%
+  group_by(year, transmission) %>%
+  summarise(meanPrice = round(mean(price)), n=n()) %>%
+  mutate(initialPrice = ifelse(transmission=="Automatic", 43954,
+                               ifelse(transmission=="Manual", 30064, 40083))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = transmission)) +
+  geom_line(aes(x = year, y = valResiduo, color = transmission), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo secondo il tipo di trasmissione BMW Serie 3") +
+  xlab("") +
+  ylab("Valore percentuale")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+```
+
+<br>
+
+## Prendiamo come caso di studio alcune hatchback
+
+Questa tipologia di automobili è orientata ad un pubblico più giovanile, procediamo con l'analizzare i dati a nostra disposizione per scoprire se esistono differenze tra i modelli delle diverse case madri.
+Per lo studio vengono selezionate le seguenti automobili: Audi A3, BMW Serie 1, Mercedes Classe A, Volkswagen Golf, Ford Fiesta, Hyundai I30, Skoda Fabia e Opel Corsa.
+Inoltre vengono considerate le automobili dal 2010 in poi, in modo da rappresentare un caso di studio reale.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+hatchbacks = read.csv("Hatchbacks.csv")
+hatchbacks = hatchbacks %>% select(-X, -X.1)
+
+```
+
+
+Nel grafico si può notare che dal 2013 si creano due cluster di auto, differenziate dal range di prezzo. Rientrano nella classe delle auto più costose le auto tedesche: Classe A, A3, Serie 1 e Golf; per poi vedere l'ingresso dal 2019 della Hyundai I30.
+Sicuramente il fatto che le auto prodotte da case tedesche siano più costose è collegato alla qualità ed affidabilità che quest'ultime possono avere, anche se il prezzo potrebbe essere condizionato in parte solamente dal brand rinomato che queste case posseggono.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(model, year) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  ggplot()+
+  geom_point(aes(x = year, y = meanPrice, color = model))+
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Prezzo Hatchback negli anni") +
+  ylab("Prezzo") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x  = element_line(0))
+
+  
+```
+
+Per quanto riguarda il kilometraggio possiamo notare un grosso divario nell'anno 2010, ma le auto degli anni più recenti presentano un kilometraggio simile tra di loro, che quindi non va ad intaccare le riflessioni sui prezzi differenti fatte in precedenza.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(model, year) %>%
+  summarise(meanKM = round(mean(kilometraggio))) %>%
+  ggplot()+
+  geom_point(aes(x = year, y = meanKM, color = model))+
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Kilometraggio Hatchback negli anni") +
+  ylab("Kilometri") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x  = element_line(0))
+```
+
+Dal grafico sottostante si può notare come le auto appartenteni alla categoria più costosa presentino una grandezza mediana dei motori più alta e che tra di esse la Hyundai I30 spicca per il prezzo medio minore di questa categoria.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(model) %>%
+  summarise(meanPrice = round(mean(price)), medianES = median(engineSize)) %>%
+  ggplot() +
+  geom_point(aes(x = model, y = medianES, color = meanPrice, size = meanPrice)) +
+  ggtitle("Prezzo e Cilindrata Hatchback") +
+  ylab("cilindrata mediana") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x  = element_line(0))
+
+
+```
+
+
+Comune a tutte le hatchback prese in considerazione è l'aumento dell'efficienza dato dalle motorizzazioni diesel, infatti quest'ultime percorrono in media il 24% in più con un litro rispetto a quelle alimentate a benzina.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  filter(fuelType != "Hybrid") %>%
+  group_by(model, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_bar(aes(x = model, y = meanKMPL, fill = fuelType),alpha=0.8, stat = "identity", position = "dodge") +
+  scale_y_continuous(breaks = scales::breaks_extended(n=6)) +
+  ggtitle("Efficienza Hatchback per tipo di carburante") +
+  ylab("Kilometri con un litro") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.major.x  = element_line(0))
+
+```
+
+Però nonostante il minor consumo di carburante delle motorizzazioni diesel osserviamo che per la maggior parte delle hatchback prevalgono le motorizzazioni a benzina, solamente la Classe A e la Serie 1 vanno contro questa tendenza.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(model, fuelType) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = model, y = count, fill = fuelType),alpha=0.8, stat = "identity") +
+  ggtitle("Hatchback per tipo di carburante") +
+  ylab("Numero di auto") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.major.x  = element_line(0))
+
+```
+
+Inoltre notiamo pochissime auto ibride, segno che negli anni passati non è stato spinto molto questo tipo di motorizzazione in questa categoria di automobili. Invece per quanto riguarda tutte le auto nel dataset vediamo come la Toyota prevalga nel mercato delle ibride.
+
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Hybrid") %>%
+  group_by(brand, year) %>%
+  summarise(n=n()) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = brand, color = brand, size = n)) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Auto ibride negli annunci") +
+  xlab("") +
+  ylab("") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0))
+
+```  
+
+E più in basso vediamo come si distribuiscono le auto del dataset, si può vedere come le auto ibride siano esigue (circa 3.000) rispetto alle altre mentre le elettriche non vengono neanche visualizzate in quanto ne sono presenti solamente 6.
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(year, fuelType) %>%
+  summarise(n = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = year, y = n, fill=fuelType), stat = "identity", alpha=0.8) +
+  ggtitle("Distribuzione auto") +
+  xlab("") +
+  ylab("Numero di auto") +
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x = element_line(0),panel.grid.major.x = element_line(0))
+  #theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(size = 0), panel.grid.minor = element_line(size=0))
+  
+
+
+
+```
+
+
+
+

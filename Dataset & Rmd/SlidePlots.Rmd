@@ -1,0 +1,612 @@
+---
+title: "PlotForKeynote"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(hrbrthemes)
+```
+
+
+```{r}
+p1 =
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(year, brand) %>%
+  summarise(n = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = brand, y = n, fill=brand), stat = "identity", alpha=0.8, show.legend = FALSE, color = 0) +
+  ggtitle("Numero di auto per casa madre") +
+  xlab("") +
+  ylab("") +
+  theme_ipsum() +
+  theme(panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        axis.text = element_text(colour = "grey70"))
+
+ggsave("p1.png", plot = p1, width = 10, height = 7)
+
+```
+
+```{r}
+p2 =
+Autos %>%
+  filter(model == " A3") %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(engineSize != 0.0) %>%
+  ggplot() + 
+  geom_point(aes(x = kilometraggio, y = price, color = fuelType), alpha = 0.2, size = 3, show.legend = FALSE)+
+  geom_smooth(aes(x = kilometraggio, y = price), color = "green") +
+  facet_wrap(~fuelType)+
+  ggtitle("Prezzo, kilometraggio, carburante Audi A3") +
+  scale_x_continuous(labels = c("0","50k","100k","150k","200k","250k")) +
+  ylab("Prezzo") +
+  xlab("Kilometraggio") +
+  theme_ipsum() +
+  theme(panel.grid.minor = element_line(0), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"))
+
+p2
+ggsave("p2.png", plot = p2, width = 12, height = 7)
+```
+
+```{r}
+p3 = 
+Autos %>%
+  filter(model == " A3") %>%
+  filter(engineSize != 0.0) %>%
+  ggplot() + 
+  geom_boxplot(aes(x = transmission, y = price, color = transmission), alpha = 0, size = 1, show.legend = FALSE)+
+  xlab("")+
+  ylab("Prezzo")+
+  ggtitle("Prezzo rispetto a trasmissione Audi A3") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0)) +
+  theme_ipsum() +
+  theme(panel.grid.minor = element_line(0), plot.background = element_rect(fill = "black"),
+        panel.grid.major.x = element_line(0),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"))
+
+ggsave("p3.png", plot = p3, width = 7, height = 5)
+```
+```{r}
+p4=
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(model == " A3") %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(engineSize != 0.0) %>%
+  group_by(brand, transmission, fuelType) %>%
+  summarise(meanPrice = round(mean(price)), meanKMPL = mean(kmpl))  %>%
+  ggplot() +
+  geom_point(aes(x = meanKMPL, y = meanPrice, color = transmission, shape = fuelType), size = 5, alpha = 0.8) +
+  xlab("Kilometri per litro di carburante") +
+  ylab("Prezzo") +
+  ggtitle("Focus consumi rispetto alla trasmissione Audi A3") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.background = element_rect(fill = "black"),
+        panel.grid.major.x = element_line(0),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        legend.key = element_rect(colour = "grey75", fill = "grey75"))
+
+ggsave("p4.png", plot = p4, width = 7, height = 5)
+
+
+
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(model == " A3") %>%
+  filter(fuelType == "Petrol" | fuelType == "Diesel") %>%
+  filter(transmission != "Other") %>%
+  group_by(transmission, fuelType) %>%
+  summarise(meanKMPL = mean(engineSize)) %>%
+  ggplot() +
+  geom_bar(aes(x = transmission, y = meanKMPL, fill = fuelType),alpha = 0.8, stat = "identity", position = "dodge") +
+  ggtitle("Cilindrata motore per trasmissione") +
+  xlab("Tipo di trasmissione") +
+  ylab("cilindrata motore (cc)") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0), legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.y = element_blank())
+```
+
+```{r}
+p5 = 
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Petrol" | fuelType == "Diesel") %>%
+  filter(transmission != "Other") %>%
+  group_by(transmission, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_bar(aes(x = transmission, y = meanKMPL, fill = fuelType),alpha = 0.8, stat = "identity", position = "dodge") +
+  ggtitle("Influenza trasmissione su consumi") +
+  xlab("Tipo di trasmissione") +
+  ylab("Kilometri per litro di carburante") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0), legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.y = element_blank())
+
+ggsave("p5.png", plot = p5, width = 7, height = 5)
+
+
+```
+
+```{r}
+p6 =
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Petrol" | fuelType == "Diesel") %>%
+  filter(transmission != "Other") %>%
+  group_by(transmission, fuelType) %>%
+  summarise(meanKMPL = mean(engineSize)) %>%
+  ggplot() +
+  geom_bar(aes(x = transmission, y = meanKMPL, fill = fuelType),alpha = 0.8, stat = "identity", position = "dodge") +
+  ggtitle("Cilindrata motore per trasmissione") +
+  xlab("Tipo di trasmissione") +
+  ylab("cilindrata motore (cc)") +
+  theme_ipsum() +
+  theme(panel.grid.major.x = element_line(0), legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.y = element_blank())
+
+ggsave("p6.png", plot = p6, width = 7, height = 5)
+```
+
+```{r}
+p7 = 
+Autos %>%
+  #filter(brand == "Audi") %>%
+  #filter(model == " A3") %>%
+  filter(engineSize != 0.0) %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(fuelType != "Electric") %>%
+  filter(kmpl < 40) %>%
+  ggplot()+
+  geom_point(aes(x = price, y = kmpl, color = brand), size = 3, alpha = 0.3) +
+  geom_smooth(aes(x = price, y = kmpl), color = "green") +
+  scale_x_continuous(breaks = scales::breaks_extended(n=10)) +
+  ggtitle("Prezzo in relazione all'efficienza") +
+  xlab("Prezzo") +
+  ylab("Kilometri per litro di carburante") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor = element_blank())
+
+ggsave("p7.png", plot = p7, width = 7, height = 5)
+```
+
+```{r}
+p8 = 
+Autos %>%
+  filter(fuelType != "Hybrid") %>%
+  filter(year<2021) %>%
+  filter(year>1994) %>%
+  
+  #filter(brand == c("Audi", "Bmw", "Merc")) %>%
+  #filter(brand == c("Ford", "Hyundai", "Skoda")) %>%
+  #filter(brand == c("Volkswagen", "Toyota", "Vauxhall")) %>%
+  
+  group_by(brand, year) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = meanKMPL, color = brand)) +
+  geom_line(aes(x = year, y = meanKMPL, color = brand), alpha=0.6) +
+  geom_smooth(aes(x = year, y = meanKMPL), color = "green") +
+  ggtitle("Kilometri per litro di carburante negli anni") +
+  ylab("KM per litro") +
+  xlab("Anni") +
+  theme_ipsum() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.title = element_blank(), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"))
+
+ggsave("p8.png", plot = p8, width = 7, height = 5)
+```
+
+```{r}
+p9 = 
+Autos %>%
+  filter(year>=2000) %>%
+  filter(year<=2020) %>%
+  group_by(brand, year) %>%
+  summarise(meanEngineSize = mean(engineSize)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = meanEngineSize, color = brand)) +
+  geom_line(aes(x = year, y = meanEngineSize, color = brand), alpha=0.6) +
+  #facet_wrap(~brand)+
+  ylim(c(1,4)) +
+  xlab("Anni") +
+  ylab("Grandezza motore in 1000 cc") +
+  ggtitle("Cilindrata automobili negli anni") +
+  theme_ipsum() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.title = element_blank(), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+ggsave("p9.png", plot = p9, width = 7, height = 5)
+```
+
+```{r}
+p10 = 
+Autos %>%
+  filter(engineSize !=0) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  filter(year >=2010) %>%
+  filter(year <= 2020) %>%
+  filter(price <= 20000) %>%
+  group_by(engineSize, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = engineSize, y = meanKMPL, color = fuelType), size = 3, alpha = 0.6) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=6)) +
+  ylim(c(5,30)) +
+  ggtitle("Consumi motori auto dal valore < 20.000 euro") +
+  xlab("Cilindrata motore") +
+  ylab("Kilometri per litro di carburante") +
+  xlim(c(0,7)) +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+p11 =
+Autos %>%
+  filter(engineSize !=0) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  filter(year >=2000) %>%
+  filter(year <= 2020) %>%
+  filter(price >= 60000) %>%
+  group_by(engineSize, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_point(aes(x = engineSize, y = meanKMPL, color = fuelType), size = 3, alpha = 0.6) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=6)) +
+  ylim(c(5,30)) +
+  ggtitle("Consumi motori auto dal valore > 60.000 euro") +
+  xlab("Cilindrata motore") +
+  ylab("Kilometri per litro di carburante") +
+  xlim(c(0,7)) +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+ggsave("p10.png", plot = p10, width = 7, height = 5)
+ggsave("p11.png", plot = p11, width = 7, height = 5)
+```
+
+```{r}
+p12 = 
+Autos %>%
+  #filter(brand == "Audi") %>%
+  filter(model == " A3" | model == " 3 Series" | model == " C Class" |
+         model == " Fiesta" | model == " Tucson" | model == " Fabia" |
+         model == " Golf" | model == " Yaris" | model == " Corsa"
+         ) %>%
+  
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(year, brand) %>%
+  summarise(brand, meanPrice = round(mean(price))) %>%
+  #prezzo 2020 audi A3: 30481
+  #prezzo 2020 bmw 3 Series: 39670
+  #prezzo 2020 merc c class: 42829
+  mutate(initialPrice = ifelse(brand=="Audi", 30481,
+                               ifelse(brand=="Bmw", 39670,
+                                      ifelse(brand=="Merc", 42829,
+                                             ifelse(brand=="Ford", 19358,
+                                                    ifelse(brand=="Hyundai", 28224,
+                                                           ifelse(brand=="Skoda", 15984,
+                                                                  ifelse(brand=="Volkswagen", 29019,
+                                                                         ifelse(brand=="Toyota", 17824, 18961))))))))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = brand)) +
+  geom_line(aes(x = year, y = valResiduo, color = brand), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo auto più popolare di ogni casa") +
+  xlab("") +
+  ylab("Valore percentuale") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+ggsave("p12.png", plot = p12, width = 7, height = 5)
+```
+
+```{r}
+p12.1 = 
+Autos %>%
+  filter(model == " A4" | model == " 3 Series" | model == " C Class") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(year, model, brand) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  #prezzo 2020 audi A4: 41305
+  #prezzo 2020 bmw 3 Series: 39670
+  #prezzo 2020 merc c class: 42829
+  mutate(initialPrice = ifelse(brand=="Audi", 41305,
+                               ifelse(brand=="Bmw", 39670, 42829))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = model)) +
+  geom_line(aes(x = year, y = valResiduo, color = model), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("valore residuo stesso segmento Audi, BMW e Mercedes") +
+  xlab("") +
+  ylab("Valore percentuale")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+ggsave("p12.1.png", plot = p12.1, width = 7, height = 5)
+
+p13 =
+Autos %>%
+  filter(model == " 3 Series") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(transmission != "Other") %>%
+  group_by(year, transmission) %>%
+  summarise(meanPrice = round(mean(price)), n=n()) %>%
+  mutate(initialPrice = ifelse(transmission=="Automatic", 43954,
+                               ifelse(transmission=="Manual", 30064, 40083))) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = transmission)) +
+  geom_line(aes(x = year, y = valResiduo, color = transmission), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo secondo il tipo di trasmissione BMW Serie 3") +
+  xlab("") +
+  ylab("Valore percentuale")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+Autos %>%
+  filter(model == " 3 Series") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(transmission != "Other") %>%
+  group_by(transmission) %>%
+  summarise(meanPrice = round(mean(price)), meankm = round(mean(kilometraggio)))
+
+p13.1 =
+Autos %>%
+  filter(model == " 3 Series") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Diesel" | fuelType == "Petrol") %>%
+  group_by(year, fuelType) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  mutate(initialPrice = ifelse(fuelType=="Diesel", 38866, 40988)) %>%
+  mutate(valResiduo = round(meanPrice*100/initialPrice)) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = valResiduo, color = fuelType)) +
+  geom_line(aes(x = year, y = valResiduo, color = fuelType), alpha=0.6) +
+  scale_x_reverse(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Valore residuo secondo il tipo di carburante BMW Serie 3") +
+  xlab("") +
+  ylab("Valore percentuale")+
+  theme_ipsum()  +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.major = element_line(colour = "grey55"),
+        panel.grid.minor.x = element_blank())
+
+Autos %>%
+  filter(model == " 3 Series") %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(transmission != "Other") %>%
+  group_by(fuelType) %>%
+  summarise(meanPrice = round(mean(price)), meankm = round(mean(kilometraggio)))
+
+ggsave("p13.png", plot = p13, width = 7, height = 5)
+ggsave("p13.1.png", plot = p13.1, width = 7, height = 5)
+
+```
+
+```{r}
+p14 = 
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(model, year) %>%
+  summarise(meanPrice = round(mean(price))) %>%
+  ggplot()+
+  geom_point(aes(x = year, y = meanPrice, color = model), size = 2.5, alpha = 0.7)+
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Prezzo Hatchback negli anni") +
+  ylab("Prezzo") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
+
+ggsave("p14.png", plot = p14, width = 7, height = 5)
+
+```
+
+```{r}
+p15 =
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  group_by(model, year) %>%
+  summarise(meanKM = round(mean(kilometraggio))) %>%
+  ggplot()+
+  geom_point(aes(x = year, y = meanKM, color = model))+
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Kilometraggio Hatchback negli anni") +
+  ylab("Kilometri") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x  = element_line(0), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
+
+ggsave("p15.png", plot = p15, width = 7, height = 5)
+
+```
+
+```{r}
+p16 =
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  filter(fuelType != "Hybrid") %>%
+  group_by(model, fuelType) %>%
+  summarise(meanKMPL = mean(kmpl)) %>%
+  ggplot() +
+  geom_bar(aes(x = model, y = meanKMPL, fill = fuelType),alpha=0.8, stat = "identity", position = "dodge") +
+  scale_y_continuous(breaks = scales::breaks_extended(n=6)) +
+  ggtitle("Efficienza Hatchback per tipo di carburante") +
+  ylab("Kilometri con un litro") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"), 
+        panel.grid.major.x  = element_blank(), 
+        panel.grid.minor.x  = element_blank(),
+        panel.grid.minor.y = element_blank())
+
+ggsave("p16.png", plot = p16, width = 7, height = 5)
+
+p17 = 
+hatchbacks %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType != "Other") %>%
+  group_by(model, fuelType) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = model, y = count, fill = fuelType),alpha=0.8, stat = "identity") +
+  ggtitle("Hatchback per tipo di carburante") +
+  ylab("Numero di auto") +
+  xlab("")+
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+ggsave("p17.png", plot = p17, width = 7, height = 5)
+
+```
+
+```{r}
+p18 = 
+Autos %>%
+  filter(year >= 2010) %>%
+  filter(year <= 2020) %>%
+  filter(fuelType == "Hybrid") %>%
+  group_by(brand, year) %>%
+  summarise(n=n()) %>%
+  ggplot() +
+  geom_point(aes(x = year, y = brand, color = brand, size = n), alpha = 0.8, show.legend = FALSE) +
+  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
+  ggtitle("Auto ibride negli annunci") +
+  xlab("") +
+  ylab("") +
+  theme_ipsum() +
+  theme(legend.title = element_blank(), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0), plot.background = element_rect(fill = "black"),
+        plot.title = element_text(colour = "white"),
+        text = element_text(colour = "white"),
+        strip.text = element_text(colour = "grey70"),
+        axis.text = element_text(colour = "grey70"))
+
+ggsave("p18.png", plot = p18, width = 7, height = 5)
+
+```
+
+
+
+
