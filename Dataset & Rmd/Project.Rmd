@@ -7,7 +7,6 @@ output:
 
 ```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
-library(gganimate)
 library(hrbrthemes)
 
 Autos = read.csv("Autos.csv")
@@ -42,27 +41,6 @@ Autos %>%
   ylab("") +
   theme_ipsum() +
   theme(panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0))
-  #scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
-  #theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(size = 0), panel.grid.minor = element_line(size=0))
-
-
-
-
-Autos %>%
-  filter(year >= 2010) %>%
-  filter(year <= 2020) %>%
-  filter(fuelType != "Other") %>%
-  group_by(year, brand) %>%
-  summarise(n = n()) %>%
-  ggplot() +
-  geom_bar(aes(x = year, y = n, fill=brand), stat = "identity", alpha=0.8) +
-  ggtitle("Distribuzione auto per casa madre") +
-  xlab("") +
-  ylab("") +
-  scale_x_continuous(breaks = scales::breaks_extended(n=11)) +
-  theme_ipsum() +
-  theme(legend.title = element_blank(), panel.grid.minor.x = element_line(0), panel.grid.major.x = element_line(0))
-  #theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(size = 0), panel.grid.minor = element_line(size=0)) +
   
 
 ```
